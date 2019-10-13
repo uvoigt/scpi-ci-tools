@@ -13,14 +13,15 @@ handle_option() {
     SHIFT_COUNT=1
   fi
 }
+
 print_usage() {
-  printf "Usage: %s [options] <artifact_id> [target_folder, default=../iflow_<artifact_id>] [version, default=active]\n" "$0" 1>&2
+  printf "Usage: %s [options] <artifact_id> [target_folder, default=../iflow_<artifact_id>] [version, default=active]\n" "$(basename "$0")" 1>&2
   print_options "-p pushes the downloaded artifact to the Git repo (newly created if it does not yet exist)"
   printf "Please specifiy the artifact to download.\n" 1>&2
   exit 1
 }
 
-. ./configure.sh
+. configure.sh
 
 ZIP_FILE_NAME="$ARTIFACT_ID"_"$ARTIFACT_VERSION.zip"
 
@@ -30,13 +31,13 @@ execute_api_request_with_retry \
   GET \
   false \
   "-o$ZIP_FILE_NAME"
-if [ "$RESPONSE_CODE" = "200" ]; then
+if [ "$RESPONSE_CODE" = 200 ]; then
   mkdir "$FOLDER" 2> /dev/null
   unzip -d "$FOLDER" "$ZIP_FILE_NAME"
 fi
 rm "$ZIP_FILE_NAME"
 if [ -n "$PUSH_REPO" ]; then
-  . ./bitbucket.sh
+  . bitbucket.sh
   if [ ! -d "$FOLDER/.git"  ]; then
     create_repo_with_retry
   fi

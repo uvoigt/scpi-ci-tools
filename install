@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# shellcheck disable=SC2016
+if ! grep -q GIT_BASE_DIR ~/.bash_profile; then
+  if [[ "$0" == ./* ]]; then
+    echo "Please start with . $0"
+    exit 1
+  fi
+  echo export GIT_BASE_DIR=~/IdeaProjects >> ~/.bash_profile
+  echo 'export PATH=$PATH:'"$(pwd)/src" >> ~/.bash_profile
+  export GIT_BASE_DIR=~/IdeaProjects
+  export PATH=$PATH:$(pwd)/src
+  echo "Added GIT_BASE_DIR=$GIT_BASE_DIR to .bash_profile."
+else
+  echo "Already installed."
+fi

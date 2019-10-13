@@ -5,7 +5,7 @@
 # Im Moment muss diese Funktion über Eingabe des Passworts authentisiert werden (kein OAuth möglich)
 ########################################################################################################################
 
-. ./login.sh
+. login.sh
 
 execute_api_request 'itspaces/odata/1.0/workspace.svc/ContentPackages?$format=json'
 

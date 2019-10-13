@@ -8,31 +8,29 @@
 ########################################################################################################################
 
 print_usage() {
-  printf "Usage: %s [options] <artifact_id> [target_folder, default=../iflow_<artifact_id>]\n" "$0" 1>&2
+  printf "Usage: %s [options] <artifact_id> [target_folder, default=../iflow_<artifact_id>]\n" "$(basename "$0")" 1>&2
   print_options
   printf "Please specifiy the artifact to deploy.\n" 1>&2
   exit 1
 }
 
-. ./configure.sh
+. configure.sh
 
 ZIP_FILE_NAME=$(uuidgen)
 ZIP_FILE_NAME=${ZIP_FILE_NAME:0:8}.zip
-ZIP_FILE_NAME=testme.zip
-
-DIR=$(pwd)
+ZIP_FILE_PATH=$TMPDIR/$ZIP_FILE_NAME
 
 pushd "$FOLDER" > /dev/null || exit 1
-zip -r "$DIR/$ZIP_FILE_NAME" "." -x "*.git*" -x "*/.*"
+zip -r "$ZIP_FILE_PATH" "." -x "*.git*" -x "*/.*"
 popd > /dev/null || exit 1
 
 execute_api_request_with_retry \
   "api/v1/IntegrationRuntimeArtifacts" \
   POST \
   true \
-  '--data-binary @'"$ZIP_FILE_NAME"
+  '--data-binary @'"$ZIP_FILE_PATH"
 
-rm "$ZIP_FILE_NAME"
+rm "$ZIP_FILE_PATH"
 
 if [ "$RESPONSE_CODE" = 202 ]; then
   printf "Artifact %s triggered for deployment.\n" "$ARTIFACT_ID" 1>&2

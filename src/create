@@ -9,13 +9,13 @@
 ########################################################################################################################
 
 print_usage() {
-  printf "Usage: %s [options] <artifact_id> <package_id> [artifact_name, default=artifact_id] [target_folder, default=../iflow_<artifact_id>]\n" "$0" 1>&2
+  printf "Usage: %s [options] <artifact_id> <package_id> [artifact_name, default=artifact_id] [folder, default=../iflow_<artifact_id>]\n" "$(basename "$0")" 1>&2
   print_options
   printf "Please specifiy the artifact and package to create it in.\n" 1>&2
   exit 1
 }
 
-. ./configure.sh
+. configure.sh
 
 if [ -n "$2" ]; then
   PACKAGE_ID=$2
@@ -27,7 +27,7 @@ if [ -n "$2" ]; then
   if [ -n "$4" ]; then
     FOLDER=$4
   else
-    FOLDER="../iflow_${ARTIFACT_ID}"
+    set_default_folder
   fi
 else
   print_usage

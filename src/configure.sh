@@ -34,8 +34,8 @@ save_config() {
 #            [true wenn XCSRFToken benötigt wird, default false]
 #            zusätzliche curl optionen
 execute_api_request() {
-  if [ "$3" = "true" ]; then
-    . ./getXCSRFToken.sh
+  if [ "$3" = true ]; then
+    . getXCSRFToken.sh
   fi
   [ -n "$2" ] && method="$2" || method='GET'
   [ -n "$4" ] && additional="$4" || additional='-g'
@@ -45,7 +45,7 @@ execute_api_request() {
     -H Content-Type:application/json \
     -H "X-CSRF-Token:$XCSRFTOKEN" \
     "$AUTH" \
-    -b .cookies \
+    -b "$CONFIG_DIR/cookies" \
     -w "%{response_code}" \
     $additional \
     "$TMN_URL/$1")
@@ -59,10 +59,14 @@ execute_api_request() {
 
 execute_api_request_with_retry() {
   execute_api_request "$@"
-  if [[ "$RESPONSE_CODE" = 40* ]]; then
-    . ./getOAuthToken.sh 0 "https://oauthasservices-$OAUTH_PREFIX.eu2.hana.ondemand.com/oauth2/api/v1" ***REMOVED***
+  if [ "$RESPONSE_CODE" = 401 ]; then
+    . getOAuthToken.sh 0 "https://oauthasservices-$OAUTH_PREFIX.eu2.hana.ondemand.com/oauth2/api/v1" ***REMOVED***
     execute_api_request "$@"
   fi
+}
+
+set_default_folder() {
+  [ -n "$GIT_BASE_DIR" ] && FOLDER="$GIT_BASE_DIR/iflow_${ARTIFACT_ID}" || FOLDER="../iflow_${ARTIFACT_ID}"
 }
 
 format_time() {
@@ -73,12 +77,16 @@ format_time() {
   fi
 }
 
-CONFIG_FILE=.config
+CONFIG_DIR=~/.scpi
+CONFIG_FILE=$CONFIG_DIR/config
 
+mkdir -p "$CONFIG_DIR"
 if [ -f $CONFIG_FILE ]; then
-  # shellcheck source=.config
-  . ./$CONFIG_FILE
+  # shellcheck source=hello
+  . $CONFIG_FILE
 fi
+
+BASE_DIR=$(dirname "$0")
 
 ARGS=("$@")
 
@@ -126,7 +134,7 @@ if [ -n "$1" ]; then
   if [ -n "$2" ]; then
     FOLDER=$2
   else
-    FOLDER="../iflow_${ARTIFACT_ID}"
+    set_default_folder
     if [ -n "$3" ]; then
       ARTIFACT_VERSION=$3
     fi

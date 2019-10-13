@@ -30,7 +30,7 @@ create_repo() {
 create_repo_with_retry() {
   create_repo
   if [[ "$RESPONSE_CODE" = 40* ]]; then
-    . ./getOAuthToken.sh bitbucket "https://bitbucket.org/site/oauth2" ***REMOVED***
+    . getOAuthToken.sh bitbucket "https://bitbucket.org/site/oauth2" ***REMOVED***
     create_repo
   fi
 }

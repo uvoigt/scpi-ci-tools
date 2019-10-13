@@ -9,12 +9,12 @@
 
 print_usage() {
   if [ -n "$1" ]; then
-    printf "Usage: %s [options] [package_id]\n" "$0" 1>&2
+    printf "Usage: %s [options] [package_id]\n" "$(basename "$0")" 1>&2
     print_options
   fi
 }
 
-. ./login.sh
+. login.sh
 
 # shellcheck disable=SC2154,SC2059,SC2016
 get_dta_by_package() {
@@ -44,7 +44,7 @@ get_dta_by_package() {
 if [ -n "$1" ]; then
     get_dta_by_package "$1"
 else
-  PACKAGE_NAMES=$(. ./ls-packages.sh | tail -n +3 | sed -n 's/^\([^ ]*\) .*/\1/p')
+  PACKAGE_NAMES=$(. ./ls-packages | tail -n +3 | sed -n 's/^\([^ ]*\) .*/\1/p')
   for k in $PACKAGE_NAMES; do
     printf "Package: ${white}%s\n${none}" "$k"
     get_dta_by_package "$k"

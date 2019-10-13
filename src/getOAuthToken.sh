@@ -15,6 +15,7 @@
 # <Client ID>
 ########################################################################################################################
 
+# shellcheck disable=SC2034
 TOKEN_TYPE=$1
 TOKEN_ENDPOINT=$2
 if [ "$TOKEN_TYPE" = 0 ]; then
@@ -26,27 +27,26 @@ else
 fi
 
 handle_response() {
-  RESPONSE=$1
-  OAUTH_TOKEN_SCPI=$(echo "${RESPONSE%???}" | jq -r .access_token)
-  RESPONSE_CODE=$(printf "%s" "${RESPONSE: -3}")
-  if [ "$RESPONSE_CODE" != "200" ]; then
+  OAUTH_TOKEN_SCPI=$(echo "${1%???}" | jq -r .access_token)
+  RESPONSE_CODE=$(printf "%s" "${1: -3}")
+  if [ "$RESPONSE_CODE" != 200 ]; then
     printf "Cannot get OAuth token: %s\n" "$RESPONSE_CODE" 1>&2
     exit 1
   fi
-  AUTH="-H Authorization:Bearer $OAUTH_TOKEN_SCPI"
+  AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"
 }
 
-
-if [ "$CLIENT_CREDS" != "" ]; then
-  handle_response $(curl -s -X POST -w "%{http_code}" -u"$CLIENT_CREDS" "$TOKEN_ENDPOINT/token?grant_type=client_credentials")
+if [ -n "$CLIENT_CREDS" ]; then
+  handle_response "$(curl -s -X POST -w '%{response_code}' -u "$CLIENT_CREDS" "$TOKEN_ENDPOINT/token?grant_type=client_credentials")"
 else
   CLIENT_ID=$3
   URL="$TOKEN_ENDPOINT/authorize?response_type=$RESPONSE_TYPE&client_id=$CLIENT_ID"
-  if [ ! -f nweb/nweb ]; then
-    gcc nweb/nweb23.c -o nweb/nweb
+  if [ ! -f "$CONFIG_DIR/nweb" ]; then
+    gcc "$BASE_DIR/../nweb/nweb23.c" -o "$CONFIG_DIR/nweb"
+    cp "$BASE_DIR/../nweb/index.html" "$CONFIG_DIR/"
   fi
-  rm nweb/nweb.log 2> /dev/null
-  nweb/nweb $PORT nweb
+  rm "$CONFIG_DIR/nweb.log" 2> /dev/null
+  "$CONFIG_DIR/nweb" $PORT "$CONFIG_DIR"
   if command -v xdg-open > /dev/null
   then
     xdg-open "$URL"
@@ -59,13 +59,13 @@ else
   fi
   unset CODE
   while [ "$CODE" = "" ]; do
-    CODE=$(sed -n 's/.*GET \/index.html\?code=\([^\ ]*\)\ .*/\1/p' nweb/nweb.log)
+    CODE=$(sed -n 's/.*GET \/index.html\?code=\([^\ ]*\)\ .*/\1/p' "$CONFIG_DIR/nweb.log")
     sleep 1
   done
   killall nweb
 
   if [ "$TOKEN_TYPE" = 0 ]; then
-    handle_response $(curl -s -X POST -w "%{http_code}" "$TOKEN_ENDPOINT/token?grant_type=authorization_code&code=$CODE&client_id=$CLIENT_ID")
+    handle_response "$(curl -s -X POST -w '%{http_code}' "$TOKEN_ENDPOINT/token?grant_type=authorization_code&code=$CODE&client_id=$CLIENT_ID")"
   else
     OAUTH_TOKEN_BITBUCKET=$CODE
   fi

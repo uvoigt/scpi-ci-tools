@@ -6,7 +6,7 @@
 
 if [ -n "$PASSWORD" ]; then return; fi
 
-. ./configure.sh
+. configure.sh
 
 CONFIG_USER=$USER
 read -rp "Username [$USER]:" USER 1>&2
