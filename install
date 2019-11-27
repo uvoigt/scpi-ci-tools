@@ -1,16 +1,18 @@
 #!/bin/bash
 
-# shellcheck disable=SC2016
-if ! grep -q GIT_BASE_DIR ~/.bash_profile; then
-  if [[ "$0" == ./* ]]; then
-    echo "Please start with . $0"
-    exit 1
-  fi
-  echo export GIT_BASE_DIR=~/IdeaProjects >> ~/.bash_profile
-  echo 'export PATH=$PATH:'"$(pwd)/src" >> ~/.bash_profile
-  export GIT_BASE_DIR=~/IdeaProjects
-  export PATH=$PATH:$(pwd)/src
-  echo "Added GIT_BASE_DIR=$GIT_BASE_DIR to .bash_profile."
+[ "$(uname)" = Linux ] && BASH_CFG=~/.bashrc || BASH_CFG=~/.bash_profile
+if [ ! -f $BASH_CFG ] || ! grep -q GIT_BASE_DIR $BASH_CFG; then
+  BASE_PATH="$( cd "$(dirname "$0")" || exit 1 ; pwd -P )"
+  [ -n "$1" ] && GIT_BASE_DIR=$1 || GIT_BASE_DIR=~/IdeaProjects
+  ( printf '\n# SCPI tools variables and completion support\n'
+    echo export GIT_BASE_DIR=$GIT_BASE_DIR
+    # shellcheck disable=SC2016
+    echo 'export PATH=$PATH:'"$BASE_PATH/src"
+    echo "source $BASE_PATH/src/scpi-completion.sh"
+  ) >> $BASH_CFG
+  echo "Installed by modifying $BASH_CFG - GIT_BASE_DIR is $GIT_BASE_DIR"
+  # shellcheck source=BASH_CFG
+  . $BASH_CFG
 else
   echo "Already installed."
 fi

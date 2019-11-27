@@ -2,8 +2,8 @@
     <head>
         <script>
             if (location.hash) {
-                const match = location.hash.match(/(access_token=)([^&]+)\&/);
-                if (match.length > 1) {
+                const match = location.hash.match(/(access_token=)([^&]+)&/);
+                if (match && match.length > 1) {
                     const url = location.href.replace(location.hash, '');
                     location.replace(url + '?code=' + match[2]);
                 }

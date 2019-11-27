@@ -16,37 +16,38 @@ print_usage() {
 
 . login.sh
 
-# shellcheck disable=SC2154,SC2059,SC2016
+# shellcheck disable=SC2154,SC2059
 get_dta_by_package() {
-  execute_api_request 'itspaces/odata/1.0/workspace.svc/ContentPackages('"'""$1""'"')/Artifacts?$format=json'
+  execute_api_request "itspaces/odata/1.0/workspace.svc/ContentPackages('$1')/Artifacts?%24format=json"
 
   if [ "$RESPONSE_CODE" = 200 ]; then
     COUNT=$(jq -r '.d.results | length' <<< "$RESPONSE")
     printf "%s total artifacts\n" "$COUNT"
-    if [ "$COUNT" -gt 0 ]; then printf "${white}"; fi
-    for k in $(jq -r '.d.results | keys | .[]' <<< "$RESPONSE"); do
-      if [ -z "$first_line" ]; then
-        printf "%s\t%s\t%s\t%s\t%s${none}\n" "Name" "Type" "Version" "Created at" "Created by"
-        first_line=1
+    if [ "$COUNT" -gt 0 ]; then
+      printf "${white}"
+      values=$(jq -r '.d.results[] | "\(.Name)\t\(.Type)\t\(.Version)\t\(.CreatedAt[6:16] | tonumber | strflocaltime("%d.%m %Y %H:%M:%S"))\t\(.CreatedBy)"' <<< "$RESPONSE" | sort)
+      IFS=$'\n' array=("$values")
+      ( printf "%s\t%s\t%s\t%s\t%s\t%s${none}\n" "Name" "Type" "Version" "Created at" "Created by"
+        for i in "${array[@]}"; do
+          printf "%s\n" "$i"
+        done
+      ) | column -t -s$'\t'
+      if [ -n "$2" ]; then
+        echo "$values" | cut -f 1 >> "$CONFIG_DIR/artifacts"
       fi
-      value=$(jq -r ".d.results[$k]" <<< "$RESPONSE")
-      type=$(jq -r .Type <<< "$value")
-      name=$(jq -r .Name <<< "$value")
-      version=$(jq -r .Version <<< "$value")
-      created_at=$(jq -r .CreatedAt <<< "$value" | cut -c 7-16)
-      created_at=$(format_time "$created_at")
-      created_by=$(jq -r .CreatedBy <<< "$value")
-      printf "%s\t%s\t%s\t%s\t%s\n" "$name" "$type" "$version" "$created_at" "$created_by"
-    done | column -t -s$'\t'
+    fi
   fi
 }
 
 if [ -n "$1" ]; then
     get_dta_by_package "$1"
 else
-  PACKAGE_NAMES=$(. ./ls-packages | tail -n +3 | sed -n 's/^\([^ ]*\) .*/\1/p')
+  # shellcheck source=packages.sh
+  PACKAGE_NAMES=$(. "$BASE_DIR/packages.sh" | tail -n +3 | sed -n 's/^\([^ ]*\) .*/\1/p')
+  : > "$CONFIG_DIR/artifacts"
   for k in $PACKAGE_NAMES; do
     printf "Package: ${white}%s\n${none}" "$k"
-    get_dta_by_package "$k"
+    get_dta_by_package "$k" true
   done
+  sort -o "$CONFIG_DIR/artifacts" "$CONFIG_DIR/artifacts"
 fi

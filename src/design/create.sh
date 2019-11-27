@@ -39,7 +39,7 @@ execute_api_request_with_retry \
   "api/v1/IntegrationDesigntimeArtifacts" \
   POST \
   true \
-  '-d{"Name": "'"$ARTIFACT_NAME"'", "Id": "'"$ARTIFACT_ID"'", "PackageId": "'"$PACKAGE_ID"'", "ArtifactContent": "'"$CONTENT"'"}'
+  '-d{"Name":"'"$ARTIFACT_NAME"'","Id":"'"$ARTIFACT_ID"'","PackageId":"'"$PACKAGE_ID"'","ArtifactContent":"'"$CONTENT"'"}'
 if [ "$RESPONSE_CODE" = 201 ]; then
   printf "Artifact %s created in package %s.\n" "$ARTIFACT_ID" "$PACKAGE_ID" 1>&2
 fi

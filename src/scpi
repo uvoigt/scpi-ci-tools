@@ -1,0 +1,82 @@
+#!/bin/bash
+
+########################################################################################################################
+# Executable CLI für dieses Modul.
+########################################################################################################################
+
+BASE_PATH="$( cd "$(dirname "$0")" || exit 1 ; pwd -P )"
+args=("$@")
+
+_call() {
+  args=("${args[@]:2}")
+  script=$1
+  if [ $# -gt 1 ]; then
+    shift
+    args=("$@" "${args[@]}")
+  fi
+  bash "$BASE_PATH/$script" "${args[@]}"
+}
+
+_illegal_option() {
+  printf "Illegal option %s\n" "$1" 1>&2
+}
+
+case $1 in
+design)
+  case $2 in
+  create)
+    _call "design/create.sh"
+    ;;
+  delete)
+    _call "design/delete.sh"
+    ;;
+  deploy)
+    _call "design/deploy.sh"
+    ;;
+  download)
+    _call "design/download.sh"
+    ;;
+  artifacts)
+    _call "design/artifacts.sh"
+    ;;
+  packages)
+    _call "design/packages.sh"
+    ;;
+  *)
+    _illegal_option "$2"
+    ;;
+  esac
+  ;;
+runtime)
+  case $2 in
+  undeploy)
+    _call "runtime/undeploy.sh"
+    ;;
+  deploy)
+    _call "runtime/deploy.sh"
+    ;;
+  artifacts)
+    _call "runtime/artifacts.sh"
+    ;;
+  errors)
+    _call "runtime/errors.sh"
+    ;;
+  call)
+    _call "runtime/call.sh"
+    ;;
+  *)
+    _illegal_option "$2"
+    ;;
+  esac
+  ;;
+variables)
+  . configure.sh
+  . bitbucket.sh
+  create_variable "$2" DOCKER_REGISTRY "$DOCKER_REGISTRY"
+  create_variable "$2" DOCKER_LOGIN "$DOCKER_LOGIN" true
+  create_variable "$2" DOCKER_PASSWORD "$DOCKER_PASSWORD" true
+  create_variable "$2" DEPLOY_CONFIG "$DEPLOY_CONFIG" true
+  ;;
+*)
+  _illegal_option "$1"
+esac

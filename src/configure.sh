@@ -9,11 +9,12 @@
 # shellcheck disable=SC2034
 white='\033[1;37m'
 none='\033[0m'
+SCPI_OAUTH_CLIENT_ID='***REMOVED***'
 
 print_options() {
   printf "Options: -a <account_id>\n" 1>&2
   printf "\t -o <oauth_prefix>\n" 1>&2
-  printf "\t -c <client_cred:secret>\n" 1>&2
+  printf "\t -c <client_id:secret>\n" 1>&2
   for var in "$@"; do
     printf "\t %s\n" "$var" 1>&2
   done
@@ -34,6 +35,7 @@ save_config() {
 #            [true wenn XCSRFToken benötigt wird, default false]
 #            zusätzliche curl optionen
 execute_api_request() {
+  : > "$CONFIG_DIR/cookies"
   if [ "$3" = true ]; then
     . getXCSRFToken.sh
   fi
@@ -52,7 +54,7 @@ execute_api_request() {
   RESPONSE_CODE=$(printf "%s" "${RESPONSE: -3}")
   if [[ "$RESPONSE_CODE" = 20* ]]; then
     RESPONSE="${RESPONSE%???}"
-  else
+  elif [ "$RESPONSE_CODE" != 401 ]; then
     printf "Error Response Code: %s\n" "$RESPONSE_CODE" 1>&2
   fi
 }
@@ -60,21 +62,14 @@ execute_api_request() {
 execute_api_request_with_retry() {
   execute_api_request "$@"
   if [ "$RESPONSE_CODE" = 401 ]; then
-    . getOAuthToken.sh 0 "https://oauthasservices-$OAUTH_PREFIX.eu2.hana.ondemand.com/oauth2/api/v1" ***REMOVED***
+    printf "Session expired, logging in...\n" 1>&2
+    . getOAuthToken.sh 0 "https://oauthasservices-$OAUTH_PREFIX.eu2.hana.ondemand.com/oauth2/api/v1" "$SCPI_OAUTH_CLIENT_ID"
     execute_api_request "$@"
   fi
 }
 
 set_default_folder() {
   [ -n "$GIT_BASE_DIR" ] && FOLDER="$GIT_BASE_DIR/iflow_${ARTIFACT_ID}" || FOLDER="../iflow_${ARTIFACT_ID}"
-}
-
-format_time() {
-  if [ "$(uname)" = "Linux" ]; then
-    date -d @"$1"
-  else
-    date -jr "$1"
-  fi
 }
 
 CONFIG_DIR=~/.scpi
@@ -85,7 +80,12 @@ if [ -f $CONFIG_FILE ]; then
   # shellcheck source=hello
   . $CONFIG_FILE
 fi
+AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"
 
+if [ -n "${COMP_WORDS[0]}" ]; then
+  TMN_URL="https://$ACCOUNT_ID-tmn.hci.eu2.hana.ondemand.com"
+  return;
+fi
 BASE_DIR=$(dirname "$0")
 
 ARGS=("$@")
@@ -103,6 +103,7 @@ for i in "${!ARGS[@]}"; do
     shift 2
   elif [ "$ARG" = "-o" ]; then
     OAUTH_PREFIX="${ARGS[$i + 1]}"
+    shift 2
   elif [ "$ARG" = "-c" ]; then
     CLIENT_CREDS="${ARGS[$i + 1]}"
     shift 2
@@ -144,4 +145,3 @@ elif [ -n "$(LC_ALL=C type -t print_usage)" ]; then
 fi
 
 TMN_URL="https://$ACCOUNT_ID-tmn.hci.eu2.hana.ondemand.com"
-AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"

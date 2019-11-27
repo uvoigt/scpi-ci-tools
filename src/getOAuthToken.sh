@@ -33,11 +33,19 @@ handle_response() {
     printf "Cannot get OAuth token: %s\n" "$RESPONSE_CODE" 1>&2
     exit 1
   fi
-  AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"
+  if [ "$TOKEN_TYPE" = 0 ]; then
+    AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"
+  else
+    OAUTH_TOKEN_BITBUCKET=$OAUTH_TOKEN_SCPI
+  fi
 }
 
 if [ -n "$CLIENT_CREDS" ]; then
-  handle_response "$(curl -s -X POST -w '%{response_code}' -u "$CLIENT_CREDS" "$TOKEN_ENDPOINT/token?grant_type=client_credentials")"
+  if [ "$TOKEN_TYPE" = 0 ]; then
+    handle_response "$(curl -s -X POST -w '%{response_code}' -u "$CLIENT_CREDS" "$TOKEN_ENDPOINT/token?grant_type=client_credentials")"
+  else
+    handle_response "$(curl -s -w '%{response_code}' -u "$CLIENT_CREDS" "$TOKEN_ENDPOINT/access_token" -d grant_type=client_credentials)"
+  fi
 else
   CLIENT_ID=$3
   URL="$TOKEN_ENDPOINT/authorize?response_type=$RESPONSE_TYPE&client_id=$CLIENT_ID"

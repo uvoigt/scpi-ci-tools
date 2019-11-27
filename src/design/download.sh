@@ -27,7 +27,7 @@ ZIP_FILE_NAME="$ARTIFACT_ID"_"$ARTIFACT_VERSION.zip"
 
 printf "Downloading artifact %s to folder %s\n" "$ARTIFACT_ID" "$FOLDER" 1>&2
 execute_api_request_with_retry \
-  "api/v1/IntegrationDesigntimeArtifacts(Id='$ARTIFACT_ID',Version='$ARTIFACT_VERSION')/"'$value' \
+  "api/v1/IntegrationDesigntimeArtifacts(Id='$ARTIFACT_ID',Version='$ARTIFACT_VERSION')/%24value" \
   GET \
   false \
   "-o$ZIP_FILE_NAME"
@@ -36,20 +36,39 @@ if [ "$RESPONSE_CODE" = 200 ]; then
   unzip -d "$FOLDER" "$ZIP_FILE_NAME"
 fi
 rm "$ZIP_FILE_NAME"
+
+# Lade externalized parameter configurations
+execute_api_request_with_retry \
+  "api/v1/IntegrationDesigntimeArtifacts(Id='$ARTIFACT_ID',Version='$ARTIFACT_VERSION')/Configurations"
+if [ "$RESPONSE_CODE" = 200 ]; then
+  COUNT=$(jq -r '.d.results | length' <<< "$RESPONSE")
+  if [ "$COUNT" -gt 0 ]; then
+    # fancy syntax mit named capturing group
+    values=$(jq -r '.d.results[] | "\(.ParameterKey | gsub("(?<a>[ :])"; "\\\(.a)"))=\(.ParameterValue | gsub("(?<a>[ :])"; "\\\(.a)"))"' <<< "$RESPONSE" | sort)
+    echo "$values" > "$FOLDER/src/main/resources/parameters.prop"
+  fi
+fi
+
 if [ -n "$PUSH_REPO" ]; then
   . bitbucket.sh
   if [ ! -d "$FOLDER/.git"  ]; then
-    create_repo_with_retry
+    create_repo
+    enable_pipelines
+    trigger_pipeline
+    rename_environment Test Development
+    rename_environment Staging Test
   fi
   pushd "$FOLDER" > /dev/null || exit 1
   if [ ! -d .git  ]; then
     git init
     git remote add origin "https://bitbucket.org/$TEAM/$REPO_NAME_LOWER.git"
-    git checkout -b master
+    git checkout -b develop
+    echo ".DS_Store" > .gitignore
+    echo "/.idea" >> .gitignore
+    echo "*.iml" >> .gitignore
+    cp "$BASE_DIR/../resources/bitbucket-pipelines.yml" .
     git add .
     git commit -m "initial";
-    git push --set-upstream origin master
-    git checkout -b develop
     git push --set-upstream origin develop
   else
     git checkout develop
