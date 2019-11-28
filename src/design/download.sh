@@ -57,6 +57,8 @@ if [ -n "$PUSH_REPO" ]; then
     trigger_pipeline
     rename_environment Test Development
     rename_environment Staging Test
+    printf "Please wait approx. 10s\n" 1>&2
+    sleep 10
   fi
   pushd "$FOLDER" > /dev/null || exit 1
   if [ ! -d .git  ]; then

@@ -7,7 +7,7 @@
 BITBUCKET_URL="https://api.bitbucket.org/2.0"
 BITBUCKET_OAUTH_KEY='***REMOVED***'
 TEAM=***REMOVED***
-PROJECT_KEY=***REMOVED***
+PROJECT_KEY=FSCPI
 REPO_NAME=$(basename "$FOLDER")
 REPO_NAME_LOWER=$(echo "$REPO_NAME" | awk '{print tolower($0)}')
 
