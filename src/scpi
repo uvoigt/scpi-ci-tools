@@ -72,7 +72,6 @@ runtime)
 variables)
   . configure.sh
   . bitbucket.sh
-  create_variable "$2" DOCKER_REGISTRY "$DOCKER_REGISTRY"
   create_variable "$2" DOCKER_LOGIN "$DOCKER_LOGIN" true
   create_variable "$2" DOCKER_PASSWORD "$DOCKER_PASSWORD" true
   create_variable "$2" DEPLOY_CONFIG "$DEPLOY_CONFIG" true
