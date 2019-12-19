@@ -74,6 +74,19 @@ create_variable() {
   retry internal_create_variable 201
 }
 
+get_number_of_variables() {
+  THE_REPO=$1
+  internal_get_number_of_variables() {
+    RESPONSE=$(curl -s \
+      -w "%{http_code}" \
+      "$BITBUCKET_URL/repositories/$TEAM/$THE_REPO/pipelines_config/variables/?access_token=$OAUTH_TOKEN_BITBUCKET")
+    RESPONSE_CODE=$(printf "%s" "${RESPONSE: -3}")
+  }
+  retry internal_get_number_of_variables 200
+  RESPONSE="${RESPONSE%???}"
+  NUM_VARIABLES=$(jq -r '.values | length' <<< "$RESPONSE")
+}
+
 rename_environment() {
   FROM=$1
   TO=$2
