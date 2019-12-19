@@ -34,7 +34,7 @@ else
 fi
 
 printf "Packaging and uploading artifact %s from folder %s\n" "$ARTIFACT_ID" "$FOLDER" 1>&2
-CONTENT=$(pushd "$FOLDER" > /dev/null || exit 1; zip -r - "." -x "*.git*" -x "*/.*" | base64; popd > /dev/null || exit 1)
+CONTENT=$(pushd "$FOLDER" > /dev/null || exit 1; zip -r - "." -x "*.git*" -x "*/.*" -x ".*" -x "bitbucket-pipelines.yml" | base64; popd > /dev/null || exit 1)
 execute_api_request_with_retry \
   "api/v1/IntegrationDesigntimeArtifacts" \
   POST \
@@ -42,4 +42,9 @@ execute_api_request_with_retry \
   '-d{"Name":"'"$ARTIFACT_NAME"'","Id":"'"$ARTIFACT_ID"'","PackageId":"'"$PACKAGE_ID"'","ArtifactContent":"'"$CONTENT"'"}'
 if [ "$RESPONSE_CODE" = 201 ]; then
   printf "Artifact %s created in package %s.\n" "$ARTIFACT_ID" "$PACKAGE_ID" 1>&2
+elif [ "$RESPONSE_CODE" = 500 ]; then
+  RESPONSE="${RESPONSE%???}"
+  printf "%s\n" "$(jq -r '.error.message.value' <<< "$RESPONSE")"
+else
+  printf "%s\n" "$RESPONSE"
 fi
