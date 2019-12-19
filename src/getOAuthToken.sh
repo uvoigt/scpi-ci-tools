@@ -50,8 +50,8 @@ else
   CLIENT_ID=$3
   URL="$TOKEN_ENDPOINT/authorize?response_type=$RESPONSE_TYPE&client_id=$CLIENT_ID"
   if [ ! -f "$CONFIG_DIR/nweb" ]; then
-    gcc "$BASE_DIR/../nweb/nweb23.c" -o "$CONFIG_DIR/nweb"
-    cp "$BASE_DIR/../nweb/index.html" "$CONFIG_DIR/"
+    gcc "$BASE_DIR/../../nweb/nweb23.c" -o "$CONFIG_DIR/nweb"
+    cp "$BASE_DIR/../../nweb/index.html" "$CONFIG_DIR/"
   fi
   rm "$CONFIG_DIR/nweb.log" 2> /dev/null
   "$CONFIG_DIR/nweb" $PORT "$CONFIG_DIR"
