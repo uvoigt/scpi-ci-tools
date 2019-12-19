@@ -21,7 +21,7 @@ ZIP_FILE_NAME=${ZIP_FILE_NAME:0:8}.zip
 ZIP_FILE_PATH=$TMPDIR/$ZIP_FILE_NAME
 
 pushd "$FOLDER" > /dev/null || exit 1
-zip -r "$ZIP_FILE_PATH" "." -x "*.git*" -x "*/.*"
+zip -r "$ZIP_FILE_PATH" "." -x "*.git*" -x "*/.*" -x ".*" -x "bitbucket-pipelines.yml"
 popd > /dev/null || exit 1
 
 execute_api_request_with_retry \
