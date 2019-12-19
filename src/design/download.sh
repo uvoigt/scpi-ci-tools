@@ -43,8 +43,8 @@ execute_api_request_with_retry \
 if [ "$RESPONSE_CODE" = 200 ]; then
   COUNT=$(jq -r '.d.results | length' <<< "$RESPONSE")
   if [ "$COUNT" -gt 0 ]; then
-    # fancy syntax mit named capturing group
-    values=$(jq -r '.d.results[] | "\(.ParameterKey | gsub("(?<a>[ :])"; "\\\(.a)"))=\(.ParameterValue | gsub("(?<a>[ :])"; "\\\(.a)"))"' <<< "$RESPONSE" | sort)
+    # fancy syntax mit named capturing group, hier werden Leerzeichen escaped
+    values=$(jq -r '.d.results[] | "\(.ParameterKey | gsub("(?<a>[ ])"; "\\\(.a)"))=\(.ParameterValue | gsub("(?<a>[ ])"; "\\\(.a)"))"' <<< "$RESPONSE" | sort)
     echo "$values" > "$FOLDER/src/main/resources/parameters.prop"
   fi
 fi
@@ -52,13 +52,16 @@ fi
 if [ -n "$PUSH_REPO" ]; then
   . bitbucket.sh
   if [ ! -d "$FOLDER/.git"  ]; then
+    printf "Waiting for readiness of the repository...\n" 1>&2
     create_repo
     enable_pipelines
     trigger_pipeline
     rename_environment Test Development
     rename_environment Staging Test
-    printf "Please wait approx. 10s\n" 1>&2
-    sleep 10
+    while [ "$NUM_VARIABLES" != 3 ]; do
+      sleep 2
+      get_number_of_variables "$REPO_NAME_LOWER"
+    done
   fi
   pushd "$FOLDER" > /dev/null || exit 1
   if [ ! -d .git  ]; then
