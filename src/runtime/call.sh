@@ -26,10 +26,14 @@ else
     fi
   fi
 fi
-set -x
-RESPONSE=$(curl -s -w "%{response_code}" -X POST "$AUTH" -H 'Content-Type: application/json' "$url" -d '{}')=
-set +x
-echo "Response:$RESPONSE"
-if [ "$RESPONSE_CODE" = 200 ]; then
-  printf "Artifact endpoint %s has been called.\n" "$1" 1>&2
+if [ -n "$url" ]; then
+  set -x
+  RESPONSE=$(curl -s -w "%{response_code}" -X POST "$AUTH" -H 'Content-Type: application/json' "$url" -d '{}')
+  set +x
+  echo "Response:$RESPONSE"
+  if [ "$RESPONSE_CODE" = 200 ]; then
+    printf "Artifact endpoint %s has been called.\n" "$1" 1>&2
+  fi
+else
+  printf "The artifact has no endpoint.\n" 1>&2
 fi
