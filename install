@@ -1,6 +1,7 @@
 #!/bin/bash
 
 [ "$(uname)" = Linux ] && BASH_CFG=~/.bashrc || BASH_CFG=~/.bash_profile
+[ "$SHELL" = /bin/zsh ] && BASH_CFG=~/.zprofile
 if [ ! -f $BASH_CFG ] || ! grep -q GIT_BASE_DIR $BASH_CFG; then
   BASE_PATH="$( cd "$(dirname "$0")" || exit 1 ; pwd -P )"
   [ -n "$1" ] && GIT_BASE_DIR=$1 || GIT_BASE_DIR=~/IdeaProjects
