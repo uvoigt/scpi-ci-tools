@@ -44,12 +44,37 @@ _scpi_completions()
 {
   . configure.sh
 
-  first=${COMP_WORDS[1]}
-  second=${COMP_WORDS[2]}
-  third=${COMP_WORDS[3]}
-  fourth=${COMP_WORDS[4]}
-  fifth=${COMP_WORDS[5]}
-  case ${#COMP_WORDS[@]} in
+  array=()
+  for i in "${COMP_WORDS[@]}"; do
+    if [[ "$i" = -* ]]; then
+      option=$i
+    else
+      if [ -n "$option" ]; then
+        case $option in
+          -[aoc])
+            unset option
+            continue
+            ;;
+          -p)
+            unset option
+        esac
+      fi
+      array+=("$i")
+    fi
+  done
+
+#printf "array:%s" $array
+
+  if [ -n "$option" ]; then
+    return
+  fi
+
+  first=${array[1]}
+  second=${array[2]}
+  third=${array[3]}
+  fourth=${array[4]}
+  fifth=${array[5]}
+  case ${#array[@]} in
   2)
     COMPREPLY=($(compgen -W 'design runtime' "$first"))
     ;;
