@@ -47,10 +47,6 @@ _scpi_completions()
   array=()
   for i in "${COMP_WORDS[@]}"; do
 
-    if [ -z "$i" ]; then
-      continue
-    fi
-
     if [[ "$i" = -* ]]; then
       option=$i
     else
@@ -68,7 +64,12 @@ _scpi_completions()
     fi
   done
 
-#printf "array:%s" $array
+  if [ $0 = "compgen" ]; then
+    array+=("")
+  fi
+
+
+  #printf "array:%s" $array
 
   if [ -n "$option" ]; then
     return
@@ -80,10 +81,10 @@ _scpi_completions()
   fourth=${array[4]}
   fifth=${array[5]}
   case ${#array[@]} in
-  1)
+  2)
     COMPREPLY=($(compgen -W 'design runtime' "$first"))
     ;;
-  2)
+  3)
     case $first in
     design)
       COMPREPLY=($(compgen -W "artifacts packages create delete deploy download" "$second"))
@@ -92,7 +93,7 @@ _scpi_completions()
       COMPREPLY=($(compgen -W "artifacts deploy undeploy errors call" "$second"))
     esac
     ;;
-  3)
+  4)
     case $first in
     design)
       case $second in
@@ -116,7 +117,7 @@ _scpi_completions()
       esac
     esac
     ;;
-  4)
+  5)
     case $first in
     design)
       case $second in
