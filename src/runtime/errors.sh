@@ -19,11 +19,8 @@ if [ "$RESPONSE_CODE" = 204 ]; then
   printf "%s is up and running.\n" "$ARTIFACT_ID"
 elif [ "$RESPONSE_CODE" = 200 ]; then
   children="$(jq -r '.. | .message + {"params": (.parameter? | try join(", ") catch "")} | select(.subsystemName != null) | "\(.subsystemName?)\t\(.subsytemPartName?)\t\(.messageText?)\t\(.params)"' <<< "$RESPONSE")"
-  IFS=$'\n' array=("$children")
   printf "${white}"
   ( printf "%s\t%s\t%s\t%s${none}\n" "System" "Part" "Message" "Parameters"
-    for i in "${array[@]}"; do
-      printf "%s\n" "$i"
-    done
+    printf "%s\n" "$children"
   ) | column -t -s$'\t'
 fi

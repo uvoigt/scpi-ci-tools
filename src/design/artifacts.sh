@@ -26,11 +26,8 @@ get_dta_by_package() {
     if [ "$COUNT" -gt 0 ]; then
       printf "${white}"
       values=$(jq -r '.d.results[] | "\(.Name)\t\(.Type)\t\(.Version)\t\(.CreatedAt[6:16] | tonumber | strflocaltime("%d.%m %Y %H:%M:%S"))\t\(.CreatedBy)"' <<< "$RESPONSE" | sort)
-      IFS=$'\n' array=("$values")
       ( printf "%s\t%s\t%s\t%s\t%s\t%s${none}\n" "Name" "Type" "Version" "Created at" "Created by"
-        for i in "${array[@]}"; do
-          printf "%s\n" "$i"
-        done
+        printf "%s\n" "$values"
       ) | column -t -s$'\t'
       if [ -n "$2" ]; then
         echo "$values" | cut -f 1 >> "$CONFIG_DIR/artifacts"
