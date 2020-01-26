@@ -95,7 +95,8 @@ for i in "${!ARGS[@]}"; do
   # ggf. wurde eine Erweiterungsfunktion übergeben
   if [ -n "$(LC_ALL=C type -t handle_option)" ] && [ "$(type -t handle_option)" = function ]; then
     SHIFT_COUNT=0
-    handle_option "$ARG"
+    SLICE=("${ARGS[@]:$i}")
+    handle_option "${SLICE[@]}"
     shift $SHIFT_COUNT
   fi
   if [ "$ARG" = "-a" ]; then
