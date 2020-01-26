@@ -46,7 +46,6 @@ _scpi_completions()
 
   array=()
   for i in "${COMP_WORDS[@]}"; do
-
     if [[ "$i" = -* ]]; then
       option=$i
     else
@@ -64,7 +63,7 @@ _scpi_completions()
     fi
   done
 
-  if [ $0 = "compgen" ]; then
+  if [ "$0" = "compgen" ]; then
     array+=("")
   fi
 
@@ -87,10 +86,10 @@ _scpi_completions()
   3)
     case $first in
     design)
-      COMPREPLY=($(compgen -W "artifacts packages create delete deploy download" "$second"))
+      COMPREPLY=($(compgen -W "artifacts packages create delete deploy download upload" "$second"))
       ;;
     runtime)
-      COMPREPLY=($(compgen -W "artifacts deploy undeploy errors call" "$second"))
+      COMPREPLY=($(compgen -W "artifacts deploy undeploy errors logs messages call" "$second"))
     esac
     ;;
   4)
@@ -100,7 +99,7 @@ _scpi_completions()
       artifacts)
         _remote_design_packages "$third"
         ;;
-      create)
+      create|upload)
         _local_artifacts
         ;;
       delete|deploy|download)
@@ -138,7 +137,7 @@ _scpi_completions()
       esac
     esac
     ;;
-  5)
+  6)
     case $first in
     design)
       case $second in

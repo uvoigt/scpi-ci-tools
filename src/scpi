@@ -36,6 +36,9 @@ design)
   download)
     _call "design/download.sh"
     ;;
+  upload)
+    _call "design/upload.sh"
+    ;;
   artifacts)
     _call "design/artifacts.sh"
     ;;
@@ -63,6 +66,12 @@ runtime)
     ;;
   call)
     _call "runtime/call.sh"
+    ;;
+  messages)
+    _call "runtime/messages.sh"
+    ;;
+  logs)
+    _call "runtime/logs.sh"
     ;;
   *)
     _illegal_option "$2"
