@@ -9,7 +9,7 @@
 # shellcheck disable=SC2034
 white='\033[1;37m'
 none='\033[0m'
-SCPI_OAUTH_CLIENT_ID='***REMOVED***'
+SCPI_OAUTH_CLIENT_ID='odata_user'
 
 print_options() {
   printf "Options: -a <account_id>\n" 1>&2

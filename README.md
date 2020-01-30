@@ -5,16 +5,22 @@ In diesem Repository befinden sich Artefakte zur Build-Automation für  das Arbe
 Die Skripte dienen der Unterstützung des Entwicklungsprozesses, wie er in
 ***REMOVED***/wiki/spaces/SAPC4IP/pages/959414296/IFlow-Entwicklung+Automatisiertes+f+r+Test+und+Deployment beschrieben ist.
 
+### Erfordernisse / Bedingungen
+Es muss `jq` installiert werden.
+
+    macOS: brew install jq
+    Ubuntu: sudo apt install jq
+
 ## Deployment / Konfiguration
 Für den Remote-Zugriff auf die SAP-Cloudplattform müssen OAuth-Clients existieren. Das sind
 
-* `***REMOVED***` für menschliche Benutzer (verwendet in `src/getOAuthToken.sh`)
-* `***REMOVED***` für die CI, hier erfolgt die Authentisierung über ein Secret, das über die Pipeline-Konfiguration
+* `odata_user` für menschliche Benutzer (verwendet in `src/getOAuthToken.sh`)
+* `pipeline` für die CI, hier erfolgt die Authentisierung über ein Secret, das über die Pipeline-Konfiguration
   übermittelt wird.
 
 Für den Remote-Zugriff auf Bitbucket muss ebenfalls ein OAuth-Client existieren. Das ist
 
-* `***REMOVED***` (verwendet in `src/bitbucket.sh`, der allerdings im Moment nur im Account von mir (Uwe Voigt) eingerichtet ist
+* `***REMOVED***` (verwendet in `src/bitbucket.sh`)
 
 ## lokale Benutzung durch Entwickler 
 ### Installation
@@ -61,11 +67,13 @@ Der Aufruf erfolgt immer über `scpi <design|runtime> <function> [parameters]`
         * Parameter `<artifact_id>` die ID des zu deployenden Artefakts
         * Parameter `[version]` die Version des zu deployenden Artefakts, default ist `active`
     * **`download`** - Lädt das angegebene Design-Time-Artefakt herunter.
-        * -p - führt nach dem Herunterladen automatisch ein `git commit` und `git push`aus - Wenn noch kein lokales Repository in dem Verzeichnis existiert hat,
+        * Parameter `[-p]` - führt nach dem Herunterladen automatisch ein `git commit` und `git push`aus - Wenn noch kein lokales Repository in dem Verzeichnis existiert hat,
           dann wird über das Bitbucket-API ein neues Repository mit dem Namen der Artefakt-ID angelegt.
         * Parameter `<artifact_id>` die ID des herunterzuladenden Artefakts
         * Parameter `[folder]` das Verzeichnis, in das das Artefakt heruntergeladen werden soll, default s. [Default Verzeichnis](#default-verzeichnis)
         * Parameter `[version]` die Version des herunterzuladenden Artefakts, default ist `active`
+    * **`upload`** - Lädt das angegebene Artefakt in den Design-Workspace. Dabei wird das Artefakt gelöscht und neu angelegt.
+        * Parameter `<artifact_id>` die ID des zu deployenden Artefakts
 * **`runtime`**
     * **`artifacts`** - Listet die deployten Artefakte.
     * **`call`** - Ruft einen Endpoint des Artefakts auf.
@@ -78,6 +86,10 @@ Der Aufruf erfolgt immer über `scpi <design|runtime> <function> [parameters]`
         * Parameter `<artifact_id>` die ID des Artefakts
     * **`undeploy`** - Löscht das Artefakt aus der Runtime.
         * Parameter `<artifact_id>` die ID des zu löschenden Artefakts
+    * **`messages`** - Zeigt die Message-Logs an.
+        * Parameter `[-n <Zahl>]` die Anzahl der anzuzeigenden Messages, default is 10
+        * Parameter `[message_id]` die Message-ID der Message, für die Details anzuzeigen sind
+    * **`logs`** - Zeigt das System-Log des aktuellen Tages an.
 
 ## Benutzung in einer CI
 Das Repository enthält ein `Dockerfile` mit dem in der Bitbucket-Pipeline ein Basis-Image für Bitbucket-Pipelines erstellt wird.
