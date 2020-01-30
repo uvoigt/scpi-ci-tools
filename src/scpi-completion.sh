@@ -6,8 +6,18 @@ _local_folders() {
 }
 
 _local_artifacts() {
-  artifacts=$(ls -d "$GIT_BASE_DIR"/iflow_* | sed 's/.*iflow_//' | paste -sd ' ' -)
-  COMPREPLY=($(compgen -W "$artifacts" "$third"))
+
+  artifacts=()
+  artifactFolders=($(ls -d "$GIT_BASE_DIR"/iflow_*))
+
+  for folder in "${artifactFolders[@]}"; do
+    artifactLine=($(perl -0777 -wpe 's/\r?\n //g' "$folder/META-INF/MANIFEST.MF" | grep ^Bundle-SymbolicName ))
+    artifacts+=($(echo ${artifactLine[1]} | tr -d ';'))
+  done
+
+  wordlist=$(echo "${artifacts[*]}")
+
+  COMPREPLY=($(compgen -W "$wordlist" "$third"))
 }
 
 _remote_design_packages() {
