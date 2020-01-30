@@ -55,14 +55,13 @@ else
   fi
   rm "$CONFIG_DIR/nweb.log" 2> /dev/null
   "$CONFIG_DIR/nweb" $PORT "$CONFIG_DIR"
-  if command -v xdg-open > /dev/null
-  then
+  if command -v xdg-open > /dev/null; then
     xdg-open "$URL"
-  elif command -v gnome-open > /dev/null
-  then
+  elif command -v gnome-open > /dev/null; then
     gnome-open "$URL"
-  elif command -v open > /dev/null
-  then
+  elif command -v x-www-browser > /dev/null; then
+    x-www-browser "$URL"
+  elif command -v open > /dev/null; then
     open "$URL"
   fi
   unset CODE
