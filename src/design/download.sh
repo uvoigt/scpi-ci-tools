@@ -72,6 +72,16 @@ if [ -n "$PUSH_REPO" ]; then
     echo "/.idea" >> .gitignore
     echo "*.iml" >> .gitignore
     cp "$BASE_DIR/../resources/bitbucket-pipelines.yml" .
+    cp "$BASE_DIR/../resources/README.md" .
+    # shellcheck disable=SC2207
+    artifactLine=($(perl -0777 -wpe 's/\r?\n //g' META-INF/MANIFEST.MF | grep ^Bundle-SymbolicName ))
+    ARTIFACT_NAME=$(echo "${artifactLine[1]}" | tr -d ';')
+    # the artifact name should not contain a slash!
+    if [ "$(uname)" = Darwin ]; then
+      sed -i '' "s/{ARTIFACT_NAME}/$ARTIFACT_NAME/" README.md
+    else
+      sed -i "s/{ARTIFACT_NAME}/$ARTIFACT_NAME/" README.md
+    fi
     git add .
     git commit -m "initial";
     git push --set-upstream origin develop
