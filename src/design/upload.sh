@@ -18,9 +18,10 @@ print_usage() {
 
 execute_api_request_with_retry "api/v1/IntegrationDesigntimeArtifacts(Id='$ARTIFACT_ID',Version='active')"
 if [ "$RESPONSE_CODE" = 200 ]; then
-  PACKAGE_ID=$(jq -r '.d.PackageId' <<< "$RESPONSE")
+  # shellcheck disable=SC2046
+  read -r PACKAGE_ID ARTIFACT_NAME <<< $(jq -r '.d.PackageId, .d.Name' <<< "$RESPONSE")
   bash "$BASE_DIR/delete.sh" "$ARTIFACT_ID" "active"
-  bash "$BASE_DIR/create.sh" "$ARTIFACT_ID" "$PACKAGE_ID"
+  bash "$BASE_DIR/create.sh" "$ARTIFACT_ID" "$PACKAGE_ID" "$ARTIFACT_NAME"
 elif [ "$RESPONSE_CODE" = 404 ]; then
   printf "Artifact %s is not available, please us create instead.\n" "$ARTIFACT_ID" 1>&2
 fi
