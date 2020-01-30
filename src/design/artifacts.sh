@@ -25,14 +25,17 @@ get_dta_by_package() {
     printf "%s total artifacts\n" "$COUNT"
     if [ "$COUNT" -gt 0 ]; then
       printf "${white}"
-      values=$(jq -r '.d.results[] | "\(.Name)\t\(.Type)\t\(.Version)\t\(.CreatedAt[6:16] | tonumber | strflocaltime("%d.%m %Y %H:%M:%S"))\t\(.CreatedBy)"' <<< "$RESPONSE" | sort)
-      ( printf "%s\t%s\t%s\t%s\t%s\t%s${none}\n" "Name" "Type" "Version" "Created at" "Created by"
+      values=$(jq -r '.d.results[] | "\(.Name)\t\(.Type)\t\(.Version)\t\(.CreatedAt[6:16] | tonumber | strflocaltime("%d.%m %Y %H:%M:%S"))'\
+'\t\(.CreatedBy)\t\(.ModifiedAt[6:16] | tonumber | strflocaltime("%d.%m %Y %H:%M:%S"))\t\(.ModifiedBy)"' <<< "$RESPONSE" | sort)
+      ( printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s${none}\n" "Name" "Type" "Version" "Created at" "Created by" "Modified at" "Modified by"
         printf "%s\n" "$values"
       ) | column -t -s$'\t'
       if [ -n "$2" ]; then
         echo "$values" | cut -f 1 >> "$CONFIG_DIR/artifacts"
       fi
     fi
+  else
+    printf "Error Response Code: %s\n" "$RESPONSE_CODE" 1>&2
   fi
 }
 
