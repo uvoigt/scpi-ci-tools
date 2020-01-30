@@ -1,0 +1,36 @@
+definitions:
+  steps:
+  - step: &Deploy
+      image:
+        name: ***REMOVED***/scpi-cli:latest
+        username: $DOCKER_LOGIN
+        password: $DOCKER_PASSWORD
+      script:
+      - |
+        echo "$DEPLOY_CONFIG" | base64 -d > deploy.config
+        . ./deploy.config
+        rm ./deploy.config
+        DEPLOY_ENV=$(echo "$BITBUCKET_DEPLOYMENT_ENVIRONMENT" | awk '{print toupper($0)}')
+        ACCOUNT_ID=${DEPLOY_ENV}_ACCOUNT_ID
+        OAUTH_PREFIX=${DEPLOY_ENV}_OAUTH_PREFIX
+        CLIENT_CREDS=${DEPLOY_ENV}_CLIENT_CREDS
+        echo "Deploying to $DEPLOY_ENV"
+        scpi runtime deploy -a ${!ACCOUNT_ID} -o ${!OAUTH_PREFIX} -c ${!CLIENT_CREDS} . $BITBUCKET_CLONE_DIR
+pipelines:
+  branches:
+    develop:
+    - step:
+        <<: *Deploy
+        name: Deploy to SCPI development
+        deployment: development
+    staging:
+    - step:
+        <<: *Deploy
+        name: Deploy to SCPI test
+        deployment: test
+    release/*:
+    - step:
+        <<: *Deploy
+        name: Deploy to SCPI production
+        deployment: production
+        trigger: manual
