@@ -22,6 +22,13 @@ _illegal_option() {
 }
 
 case $1 in
+config)
+  case $2 in
+  *)
+    _call "config/switch.sh" "$2"
+    ;;
+  esac
+  ;;
 design)
   case $2 in
   create)
@@ -73,6 +80,9 @@ runtime)
   logs)
     _call "runtime/logs.sh"
     ;;
+  queue)
+    _call "runtime/queue.sh"
+    ;;
   *)
     _illegal_option "$2"
     ;;
@@ -84,6 +94,16 @@ variables)
   create_variable "$2" DOCKER_LOGIN "$DOCKER_LOGIN" true
   create_variable "$2" DOCKER_PASSWORD "$DOCKER_PASSWORD" true
   create_variable "$2" DEPLOY_CONFIG "$DEPLOY_CONFIG" true
+  ;;
+repositories)
+  . configure.sh
+  . bitbucket.sh
+  update_iflow_repositories "$2"
+  ;;
+pullrequests)
+  . configure.sh
+  . bitbucket.sh
+  merge_iflow_repositories "$2" "$3" "$4"
   ;;
 *)
   _illegal_option "$1"

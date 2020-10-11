@@ -13,11 +13,13 @@
 # <0 für SCPI, 1 für BITBUCKET>
 # <TOKEN Endpoint>
 # <Client ID>
+# <Variablenname> für das ermittelte Token, wenn gesetzt, wird das Speichern des Tokens unterbunden, default leer
 ########################################################################################################################
 
 # shellcheck disable=SC2034
 TOKEN_TYPE=$1
 TOKEN_ENDPOINT=$2
+__resultvar=$4
 if [ "$TOKEN_TYPE" = 0 ]; then
   RESPONSE_TYPE=code
   PORT=56789
@@ -27,16 +29,22 @@ else
 fi
 
 handle_response() {
-  OAUTH_TOKEN_SCPI=$(echo "${1%???}" | jq -r .access_token)
+  local token
+  token=$(echo "${1%???}" | jq -r .access_token)
+  if [ -n "$__resultvar" ]; then
+    eval "$__resultvar='$token'"
+  else
+    OAUTH_TOKEN_SCPI=$token
+  fi
   RESPONSE_CODE=$(printf "%s" "${1: -3}")
   if [ "$RESPONSE_CODE" != 200 ]; then
     printf "Cannot get OAuth token: %s\n" "$RESPONSE_CODE" 1>&2
     exit 1
   fi
   if [ "$TOKEN_TYPE" = 0 ]; then
-    AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"
+    AUTH="-HAuthorization:Bearer $token"
   else
-    OAUTH_TOKEN_BITBUCKET=$OAUTH_TOKEN_SCPI
+    OAUTH_TOKEN_BITBUCKET=$token
   fi
 }
 
@@ -61,12 +69,15 @@ else
     gnome-open "$URL"
   elif command -v x-www-browser > /dev/null; then
     x-www-browser "$URL"
+  elif command -v cygstart > /dev/null; then
+    cygstart "$URL"
   elif command -v open > /dev/null; then
     open "$URL"
   fi
   unset CODE
   while [ "$CODE" = "" ]; do
-    CODE=$(sed -n 's/.*GET \/index.html\?code=\([^\ ]*\)\ .*/\1/p' "$CONFIG_DIR/nweb.log")
+    [ "$(uname)" = Darwin ] || disableExt='--posix'
+    CODE=$(sed $disableExt -n 's/.*GET \/index.html\?code=\([^\ ]*\)\ .*/\1/p' "$CONFIG_DIR/nweb.log")
     sleep 1
   done
   killall nweb
@@ -78,4 +89,6 @@ else
   fi
 fi
 
-save_config
+if [ -z "$__resultvar" ]; then
+  save_config
+fi

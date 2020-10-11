@@ -8,7 +8,7 @@
 
 # shellcheck disable=SC2034
 white='\033[1;37m'
-none='\033[0m'
+none='\033[0;39m'
 SCPI_OAUTH_CLIENT_ID='odata_user'
 
 print_options() {
@@ -28,12 +28,15 @@ save_config() {
     printf "OAUTH_TOKEN_BITBUCKET=%s\n" "$OAUTH_TOKEN_BITBUCKET"; \
     printf "OAUTH_TOKEN_SCPI=%s\n" "$OAUTH_TOKEN_SCPI"; \
     printf "XCSRFTOKEN=%s\n" "$XCSRFTOKEN") > "$CONFIG_FILE"
+
+  printf "CONFIG_ENV=%s\n" "$CONFIG_ENV" > "$CONFIG_ENV_FILE"
 }
 
 # Parameter: <query>
 #            [<method>]
 #            [true wenn XCSRFToken benötigt wird, default false]
 #            zusätzliche curl optionen
+#            erwarteter Fehlercode
 execute_api_request() {
   : > "$CONFIG_DIR/cookies"
   if [ "$3" = true ]; then
@@ -41,6 +44,7 @@ execute_api_request() {
   fi
   [ -n "$2" ] && method="$2" || method='GET'
   [ -n "$4" ] && additional="$4" || additional='-g'
+  [ -n "$5" ] && acceptableError="$5" || acceptableError=401
   RESPONSE=$(curl -s \
     -X "$method" \
     -H Accept:application/json \
@@ -54,7 +58,7 @@ execute_api_request() {
   RESPONSE_CODE=$(printf "%s" "${RESPONSE: -3}")
   if [[ "$RESPONSE_CODE" = 20* ]]; then
     RESPONSE="${RESPONSE%???}"
-  elif [ "$RESPONSE_CODE" != 401 ]; then
+  elif [ "$RESPONSE_CODE" != 401 ] && [ "$RESPONSE_CODE" != $acceptableError ]; then
     printf "Error Response Code: %s\n" "$RESPONSE_CODE" 1>&2
   fi
 }
@@ -69,13 +73,26 @@ execute_api_request_with_retry() {
 }
 
 set_default_folder() {
-  [ -n "$GIT_BASE_DIR" ] && FOLDER="$GIT_BASE_DIR/iflow_${ARTIFACT_ID}" || FOLDER="../iflow_${ARTIFACT_ID}"
+  ARTIFACT_NAME_SLUG=$(printf "%s" "iflow_$ARTIFACT_ID" | cut -c-62)
+  [ -n "$GIT_BASE_DIR" ] && FOLDER=$(find "$GIT_BASE_DIR" -maxdepth 1 -iname "$ARTIFACT_NAME_SLUG*") || FOLDER=$(find ../ -maxdepth 1 -iname "$ARTIFACT_NAME_SLUG*")
+  # if local folder does not exist, use artifact id
+  if [ -z "$FOLDER" ]; then
+    [ -n "$GIT_BASE_DIR" ] && FOLDER="$GIT_BASE_DIR/iflow_${ARTIFACT_ID}" || FOLDER="../iflow_${ARTIFACT_ID}"
+  fi
 }
 
 CONFIG_DIR=~/.scpi
 CONFIG_FILE=$CONFIG_DIR/config
 
 mkdir -p "$CONFIG_DIR"
+if [ -f $CONFIG_ENV_FILE ]; then
+  # shellcheck source=hallo
+  . $CONFIG_ENV_FILE
+else
+  CONFIG_ENV=dev
+fi
+
+CONFIG_FILE=$CONFIG_DIR/config.$CONFIG_ENV
 if [ -f $CONFIG_FILE ]; then
   # shellcheck source=hello
   . $CONFIG_FILE

@@ -15,7 +15,7 @@ print_usage() {
 
 . configure.sh
 
-[ -n "$FOLDER" ] && ARTIFACT_VERSION="$FOLDER"
+[ -n "$2" ] && ARTIFACT_VERSION="$2"
 
 execute_api_request_with_retry \
   "api/v1/IntegrationDesigntimeArtifacts(Id='$ARTIFACT_ID',Version='$ARTIFACT_VERSION')" \

@@ -8,16 +8,23 @@
 
 # shellcheck disable=SC2034,SC2140
 handle_option() {
-  if [ "$1" = "-p" ]; then
+  if [ "$1" = "-p" ] || [ "$1" = "-ps" ]; then
     PUSH_REPO="true"
+    [ "$1" = "-ps" ] && SSH_URL=true
+    SHIFT_COUNT=1
+  fi
+  if [ "$1" = "-f" ]; then
+    OVERWRITE="true"
     SHIFT_COUNT=1
   fi
 }
 
 print_usage() {
   printf "Usage: %s [options] <artifact_id> [target_folder, default=../iflow_<artifact_id>] [version, default=active]\n" "$(basename "$0")" 1>&2
-  print_options "-p pushes the downloaded artifact to the Git repo (newly created if it does not yet exist)"
-  printf "Please specifiy the artifact to download.\n" 1>&2
+  print_options "-p pushes the downloaded artifact to the Git repo (newly created if it does not yet exist)" \
+    "-ps uses SSH URL instead HTTP URL when creating the Git repo" \
+    "-f doesn't prompt with overwrite warning if the artifact already exists locally"
+  printf "Please specify the artifact to download.\n" 1>&2
   exit 1
 }
 
@@ -33,7 +40,15 @@ execute_api_request_with_retry \
   "-o$ZIP_FILE_NAME"
 if [ "$RESPONSE_CODE" = 200 ]; then
   mkdir "$FOLDER" 2> /dev/null
-  unzip -d "$FOLDER" "$ZIP_FILE_NAME"
+  if [ -n "$OVERWRITE" ]; then
+    unzip -o -d "$FOLDER" "$ZIP_FILE_NAME"
+  else
+    unzip -d "$FOLDER" "$ZIP_FILE_NAME"
+  fi
+
+  find "$FOLDER" -type f ! -path '*.idea/*' \( -iname \*.edmx -o -iname \*.mmap -o -iname \*.xsd -o -iname \*.xml \) \
+    -exec sh -c 'i="$1"; echo Formatting: "$i"; xmllint --format "$i" --output "$i"' _ {} \;
+
 fi
 rm "$ZIP_FILE_NAME"
 
@@ -58,21 +73,26 @@ if [ -n "$PUSH_REPO" ]; then
     trigger_pipeline
     rename_environment Test Development
     rename_environment Staging Test
+    configure_branching_settings "$REPO_SLUG"
     while [ "$NUM_VARIABLES" != 3 ]; do
       sleep 2
-      get_number_of_variables "$REPO_NAME_LOWER"
+      get_number_of_variables "$REPO_SLUG"
     done
   fi
   pushd "$FOLDER" > /dev/null || exit 1
   if [ ! -d .git  ]; then
+    [ -n "$SSH_URL" ] && repoUrl="git@bitbucket.org:$TEAM/$REPO_SLUG.git" || repoUrl="https://bitbucket.org/$TEAM/$REPO_SLUG.git"
     git init
-    git remote add origin "https://bitbucket.org/$TEAM/$REPO_NAME_LOWER.git"
+    git remote add origin "$repoUrl"
     git checkout -b develop
     echo ".DS_Store" > .gitignore
     echo "/.idea" >> .gitignore
     echo "*.iml" >> .gitignore
     cp "$BASE_DIR/../resources/bitbucket-pipelines.yml" .
-    cp "$BASE_DIR/../resources/README.md" .
+    cp -n "$BASE_DIR/../resources/README.md" .
+#    mkdir src/main/resources/script 2> /dev/null
+#    cp "$BASE_DIR/../resources/tools.groovy" src/main/resources/script/
+#    cp "$BASE_DIR/../resources/mappingFunctions.groovy" src/main/resources/script/
     # shellcheck disable=SC2207
     artifactLine=($(perl -0777 -wpe 's/\r?\n //g' META-INF/MANIFEST.MF | grep ^Bundle-SymbolicName ))
     ARTIFACT_NAME=$(echo "${artifactLine[1]}" | tr -d ';')
@@ -88,6 +108,7 @@ if [ -n "$PUSH_REPO" ]; then
   else
     git checkout develop
     git pull
+    git add .
     git commit -a
     git push
   fi

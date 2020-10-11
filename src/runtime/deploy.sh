@@ -10,7 +10,7 @@
 print_usage() {
   printf "Usage: %s [options] <artifact_id> [target_folder, default=../iflow_<artifact_id>]\n" "$(basename "$0")" 1>&2
   print_options
-  printf "Please specifiy the artifact to deploy.\n" 1>&2
+  printf "Please specify the artifact to deploy.\n" 1>&2
   exit 1
 }
 
