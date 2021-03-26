@@ -27,6 +27,7 @@ save_config() {
     printf "USER=%s\n" "$USER"; \
     printf "OAUTH_TOKEN_BITBUCKET=%s\n" "$OAUTH_TOKEN_BITBUCKET"; \
     printf "OAUTH_TOKEN_SCPI=%s\n" "$OAUTH_TOKEN_SCPI"; \
+    printf "OAUTH_REFRESH_TOKEN_SCPI=%s\n" "$OAUTH_REFRESH_TOKEN_SCPI"; \
     printf "XCSRFTOKEN=%s\n" "$XCSRFTOKEN") > "$CONFIG_FILE"
 
   printf "CONFIG_ENV=%s\n" "$CONFIG_ENV" > "$CONFIG_ENV_FILE"
@@ -73,8 +74,11 @@ execute_api_request_with_retry() {
 }
 
 set_default_folder() {
-  ARTIFACT_NAME_SLUG=$(printf "%s" "iflow_$ARTIFACT_ID" | cut -c-62)
-  [ -n "$GIT_BASE_DIR" ] && FOLDER=$(find "$GIT_BASE_DIR" -maxdepth 1 -iname "$ARTIFACT_NAME_SLUG*") || FOLDER=$(find ../ -maxdepth 1 -iname "$ARTIFACT_NAME_SLUG*")
+  local artifactName
+  local abbreviatedName
+  artifactName=$(printf "%s" "iflow_$ARTIFACT_ID")
+  abbreviatedName=$(printf "%s" "$artifactName" | cut -c-62)
+  [ -n "$GIT_BASE_DIR" ] && FOLDER=$(find "$GIT_BASE_DIR" -maxdepth 1 -iname "$artifactName" -o -iname "$abbreviatedName") || FOLDER=$(find ../ -maxdepth 1 -iname "$artifactName" -o -iname "$abbreviatedName")
   # if local folder does not exist, use artifact id
   if [ -z "$FOLDER" ]; then
     [ -n "$GIT_BASE_DIR" ] && FOLDER="$GIT_BASE_DIR/iflow_${ARTIFACT_ID}" || FOLDER="../iflow_${ARTIFACT_ID}"
@@ -82,7 +86,7 @@ set_default_folder() {
 }
 
 CONFIG_DIR=~/.scpi
-CONFIG_FILE=$CONFIG_DIR/config
+CONFIG_ENV_FILE=$CONFIG_DIR/env
 
 mkdir -p "$CONFIG_DIR"
 if [ -f $CONFIG_ENV_FILE ]; then
@@ -94,7 +98,7 @@ fi
 
 CONFIG_FILE=$CONFIG_DIR/config.$CONFIG_ENV
 if [ -f $CONFIG_FILE ]; then
-  # shellcheck source=hello
+  # shellcheck source=bello
   . $CONFIG_FILE
 fi
 AUTH="-HAuthorization:Bearer $OAUTH_TOKEN_SCPI"
